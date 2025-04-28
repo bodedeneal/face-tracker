@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Face Tracking</title>
+  <title>Face Tracking with Coordinates</title>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js"></script>
   <style>
     body {
@@ -21,7 +21,10 @@
     }
     video {
       transform: scaleX(-1); /* Mirror the video for natural face tracking */
-      display: none;
+      display: block;
+      width: 100%;
+      height: auto;
+      object-fit: cover;
     }
     #coordinates {
       position: absolute;
@@ -63,21 +66,19 @@
         const boundingBox = face.boundingBox;
 
         // Calculate the center of the face
-        const screenX = boundingBox.xCenter * window.innerWidth;
-        const screenY = boundingBox.yCenter * window.innerHeight;
+        const faceCenterX = boundingBox.xCenter * canvasElement.width;
+        const faceCenterY = boundingBox.yCenter * canvasElement.height;
 
         // Update coordinates display
-        coordinatesDiv.textContent = `Coordinates: (${Math.round(screenX)}, ${Math.round(screenY)})`;
+        coordinatesDiv.textContent = `Coordinates: (${Math.round(faceCenterX)}, ${Math.round(faceCenterY)})`;
 
-        // Draw the bounding box
+        // Draw a circle around the face
+        const circleRadius = Math.min(boundingBox.width, boundingBox.height) * canvasElement.width / 2;
         canvasCtx.strokeStyle = 'red';
         canvasCtx.lineWidth = 4;
-        canvasCtx.strokeRect(
-          boundingBox.xCenter * canvasElement.width - boundingBox.width * canvasElement.width / 2,
-          boundingBox.yCenter * canvasElement.height - boundingBox.height * canvasElement.height / 2,
-          boundingBox.width * canvasElement.width,
-          boundingBox.height * canvasElement.height
-        );
+        canvasCtx.beginPath();
+        canvasCtx.arc(faceCenterX, faceCenterY, circleRadius, 0, 2 * Math.PI);
+        canvasCtx.stroke();
       } else {
         coordinatesDiv.textContent = `Coordinates: (N/A, N/A)`;
       }
