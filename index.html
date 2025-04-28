@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Face Tracking</title>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js"></script>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #000;
+    }
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    video {
+      transform: scaleX(-1); /* Mirror the video for natural face tracking */
+      display: none;
+    }
+    #coordinates {
+      position: absolute;
+      color: white;
+      font-size: 20px;
+      font-family: Arial, sans-serif;
+      top: 10px;
+      left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="coordinates">Coordinates: (N/A, N/A)</div>
+  <video id="videoElement" autoplay playsinline></video>
+  <canvas id="canvasElement"></canvas>
+
+  <script>
+    const videoElement = document.getElementById('videoElement');
+    const canvasElement = document.getElementById('canvasElement');
+    const canvasCtx = canvasElement.getContext('2d');
+    const coordinatesDiv = document.getElementById('coordinates');
+
+    // MediaPipe Face Detection
+    const faceDetection = new FaceDetection.FaceDetection({
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`
+    });
+
+    faceDetection.setOptions({
+      model: 'short', // Use the short-range model
+      minDetectionConfidence: 0.5,
+    });
+
+    faceDetection.onResults((results) => {
+      canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+
+      if (results.detections.length > 0) {
+        // Get the first detected face
+        const face = results.detections[0];
+        const boundingBox = face.boundingBox;
+
+        // Calculate the center of the face
+        const screenX = boundingBox.xCenter * window.innerWidth;
+        const screenY = boundingBox.yCenter * window.innerHeight;
+
+        // Update coordinates display
+        coordinatesDiv.textContent = `Coordinates: (${Math.round(screenX)}, ${Math.round(screenY)})`;
+
+        // Draw the bounding box
+        canvasCtx.strokeStyle = 'red';
+        canvasCtx.lineWidth = 4;
+        canvasCtx.strokeRect(
+          boundingBox.xCenter * canvasElement.width - boundingBox.width * canvasElement.width / 2,
+          boundingBox.yCenter * canvasElement.height - boundingBox.height * canvasElement.height / 2,
+          boundingBox.width * canvasElement.width,
+          boundingBox.height * canvasElement.height
+        );
+      } else {
+        coordinatesDiv.textContent = `Coordinates: (N/A, N/A)`;
+      }
+    });
+
+    // Access the webcam
+    async function initCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        videoElement.srcObject = stream;
+
+        videoElement.onloadeddata = () => {
+          canvasElement.width = videoElement.videoWidth;
+          canvasElement.height = videoElement.videoHeight;
+
+          // Start the face detection
+          function detect() {
+            faceDetection.send({ image: videoElement });
+            requestAnimationFrame(detect);
+          }
+          detect();
+        };
+      } catch (error) {
+        alert('Error accessing the webcam: ' + error.message);
+      }
+    }
+
+    initCamera();
+  </script>
+</body>
+</html>
