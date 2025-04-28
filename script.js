@@ -9,11 +9,12 @@ const faceDetection = new FaceDetection.FaceDetection({
 });
 
 faceDetection.setOptions({
-  model: 'short', // Use the short-range model
+  model: 'short', // Use the short-range model for close-range face detection
   minDetectionConfidence: 0.5,
 });
 
 faceDetection.onResults((results) => {
+  // Clear the canvas for the next frame
   canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
   if (results.detections.length > 0) {
@@ -25,7 +26,7 @@ faceDetection.onResults((results) => {
     const faceCenterX = boundingBox.xCenter * canvasElement.width;
     const faceCenterY = boundingBox.yCenter * canvasElement.height;
 
-    // Update coordinates display
+    // Update the coordinates display
     coordinatesDiv.textContent = `Coordinates: (${Math.round(faceCenterX)}, ${Math.round(faceCenterY)})`;
 
     // Draw a circle around the face
@@ -36,24 +37,25 @@ faceDetection.onResults((results) => {
     canvasCtx.arc(faceCenterX, faceCenterY, circleRadius, 0, 2 * Math.PI);
     canvasCtx.stroke();
   } else {
-    coordinatesDiv.textContent = `Coordinates: (N/A, N/A)`;
+    coordinatesDiv.textContent = 'Coordinates: (N/A, N/A)';
   }
 });
 
-// Access the webcam
+// Function to initialize the webcam
 async function initCamera() {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
     videoElement.srcObject = stream;
 
     videoElement.onloadeddata = () => {
+      // Set the canvas dimensions to match the video feed
       canvasElement.width = videoElement.videoWidth;
       canvasElement.height = videoElement.videoHeight;
 
-      // Start the face detection
+      // Start face detection
       function detect() {
         faceDetection.send({ image: videoElement });
-        requestAnimationFrame(detect);
+        requestAnimationFrame(detect); // Continuously loop face detection
       }
       detect();
     };
@@ -62,4 +64,5 @@ async function initCamera() {
   }
 }
 
+// Start the webcam and face detection
 initCamera();
