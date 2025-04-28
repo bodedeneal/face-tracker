@@ -1,0 +1,31 @@
+body {
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #000;
+}
+
+canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+video {
+  transform: scaleX(-1); /* Mirror the video for natural face tracking */
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+#coordinates {
+  position: absolute;
+  color: white;
+  font-size: 20px;
+  font-family: Arial, sans-serif;
+  top: 10px;
+  left: 10px;
+}
